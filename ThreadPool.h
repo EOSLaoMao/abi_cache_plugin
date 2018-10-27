@@ -17,12 +17,14 @@ public:
     template<class F, class... Args>
     auto enqueue(F&& f, Args&&... args) 
         -> std::future<typename std::result_of<F(Args...)>::type>;
+    size_t queue_size() { return task_queue_size; }
     ~ThreadPool();
 private:
     // need to keep track of threads so we can join them
     std::vector< std::thread > workers;
     // the task queue
     std::queue< std::function<void()> > tasks;
+    size_t task_queue_size;
     
     // synchronization
     std::mutex queue_mutex;
@@ -32,7 +34,7 @@ private:
  
 // the constructor just launches some amount of workers
 inline ThreadPool::ThreadPool(size_t threads)
-    :   stop(false)
+    :task_queue_size(0), stop(false)
 {
     for(size_t i = 0;i<threads;++i)
         workers.emplace_back(
@@ -50,6 +52,7 @@ inline ThreadPool::ThreadPool(size_t threads)
                             return;
                         task = std::move(this->tasks.front());
                         this->tasks.pop();
+                        task_queue_size--;
                     }
 
                     task();
@@ -78,6 +81,7 @@ auto ThreadPool::enqueue(F&& f, Args&&... args)
             throw std::runtime_error("enqueue on stopped ThreadPool");
 
         tasks.emplace([task](){ (*task)(); });
+        task_queue_size++;
     }
     condition.notify_one();
     return res;
