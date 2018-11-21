@@ -11,17 +11,17 @@
 #include <functional>
 #include <stdexcept>
 
-class ThreadPool {
+class ThreadPoolA {
 public:
-    ThreadPool(size_t);
-    void enqueue(std::function<void()>&& f);
+    ThreadPoolA(size_t);
+    void enqueue(std::function<void(size_t)>&& f);
     size_t queue_size() { return task_queue_size; }
-    ~ThreadPool();
+    ~ThreadPoolA();
 private:
     // need to keep track of threads so we can join them
     std::vector< std::thread > workers;
     // the task queue
-    std::queue< std::function<void()> > tasks;
+    std::queue< std::function<void(size_t)> > tasks;
     size_t task_queue_size;
     
     // synchronization
@@ -31,16 +31,17 @@ private:
 };
  
 // the constructor just launches some amount of workers
-inline ThreadPool::ThreadPool(size_t threads)
+inline ThreadPoolA::ThreadPoolA(size_t threads)
     :task_queue_size(0), stop(false)
 {
-    for(size_t i = 0;i<threads;++i)
+    size_t idx;
+    for(idx = 0; idx < threads; ++idx)
         workers.emplace_back(
-            [this]
+            [idx, this]
             {
                 for(;;)
                 {
-                    std::function<void()> task;
+                    std::function<void(size_t)> task;
 
                     {
                         std::unique_lock<std::mutex> lock(this->queue_mutex);
@@ -53,15 +54,14 @@ inline ThreadPool::ThreadPool(size_t threads)
                         this->tasks.pop();
                         task_queue_size--;
                     }
-
-                    task();
+                    task(idx);
                 }
             }
         );
 }
 
 // add new work item to the pool
-void ThreadPool::enqueue(std::function<void()>&& f)
+void ThreadPoolA::enqueue(std::function<void(size_t)>&& f)
 {
     {
         std::unique_lock<std::mutex> lock(queue_mutex);
@@ -77,7 +77,7 @@ void ThreadPool::enqueue(std::function<void()>&& f)
 }
 
 // the destructor joins all threads
-inline ThreadPool::~ThreadPool()
+inline ThreadPoolA::~ThreadPoolA()
 {
     {
         std::unique_lock<std::mutex> lock(queue_mutex);
