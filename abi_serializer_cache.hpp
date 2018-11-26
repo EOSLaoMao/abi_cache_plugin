@@ -17,9 +17,9 @@ class abi_serializer_cache
 {
 public:
    void abi_to_serializer(abi_serializer& abis, const account_name &name, const chain::bytes& abi_bytes);
-   void insert( const account_name &name, fc::unsigned_int& abi_sequence, const chain::bytes& abi);
-   void insert( const account_name &name, fc::unsigned_int& abi_sequence, const abi_serializer& abis);
-   optional<abi_serializer> find( const account_name &name,  fc::unsigned_int& abi_sequence);
+   void insert( const account_name &name, const fc::unsigned_int& abi_sequence, const chain::bytes& abi);
+   void insert( const account_name &name, const fc::unsigned_int& abi_sequence, const abi_serializer& abis);
+   optional<abi_serializer> find( const account_name &name, const fc::unsigned_int& abi_sequence);
    fc::microseconds abi_serializer_max_time;
 
 private:
@@ -66,7 +66,7 @@ void abi_serializer_cache::abi_to_serializer(abi_serializer& abis, const account
 }
 
 
-void abi_serializer_cache::insert( const account_name &name, fc::unsigned_int& abi_sequence,
+void abi_serializer_cache::insert( const account_name &name, const fc::unsigned_int& abi_sequence,
                                    const abi_serializer& abis ) {
    if( name.good()) {
       try {
@@ -77,7 +77,7 @@ void abi_serializer_cache::insert( const account_name &name, fc::unsigned_int& a
    }
 }
 
-void abi_serializer_cache::insert( const account_name &name, fc::unsigned_int& abi_sequence,
+void abi_serializer_cache::insert( const account_name &name, const fc::unsigned_int& abi_sequence,
                                    const chain::bytes& abi_bytes ) {
    try {
       abi_serializer abis;
@@ -88,7 +88,7 @@ void abi_serializer_cache::insert( const account_name &name, fc::unsigned_int& a
    } FC_CAPTURE_AND_LOG((name))
 }
 
-optional<abi_serializer> abi_serializer_cache::find( const account_name &name, fc::unsigned_int& abi_sequence ) {
+optional<abi_serializer> abi_serializer_cache::find( const account_name &name, const fc::unsigned_int& abi_sequence ) {
    if( name.good()) {
       try {
          boost::upgrade_lock< boost::shared_mutex > lock(cache_mtx);

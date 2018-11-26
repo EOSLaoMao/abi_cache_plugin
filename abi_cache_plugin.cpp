@@ -46,9 +46,8 @@ public:
    void process_applied_transaction( chain::transaction_trace_ptr );
    void _process_applied_transaction( chain::transaction_trace_ptr, size_t thread_idx );
 
-   optional<abi_serializer> get_abi_serializer( const account_name &name,  fc::unsigned_int& abi_sequence );
+   optional<abi_serializer> get_abi_serializer( const account_name &name, const fc::unsigned_int& abi_sequence );
 
-   std::unique_ptr<ThreadPoolA> thread_pool;
    size_t max_task_queue_size = 0;
    int queue_sleep_time = 0;
 
@@ -61,6 +60,8 @@ public:
    uint64_t min_sequence_heights;
 
    static const action_name setabi;
+
+   std::unique_ptr<ThreadPoolA> thread_pool;
 };
 
 const action_name abi_cache_plugin_impl::setabi = chain::setabi::get_name();
@@ -119,7 +120,7 @@ void abi_cache_plugin_impl::process_applied_transaction( chain::transaction_trac
          [ smallest, this ](size_t thread_idx)
          {
             try {
-               r_clients[thread_idx]->redis_cmd(nullptr, "SET globalSeqHeight %s", std::to_string(smallest).c_str());
+               r_clients[thread_idx]->redis_set("SET globalSeqHeight %s", std::to_string(smallest).c_str());
             } catch ( ... ) {
                handle_exception(__LINE__);
             }
@@ -151,9 +152,9 @@ void abi_cache_plugin_impl::_process_applied_transaction( chain::transaction_tra
 
             if (redis_enabled) {
                // insert abi binary into redis
-               r_clients[thread_idx]->redis_cmd(
-                  nullptr, "HSET %s %s %b",
-                  std::to_string(setabi.account.value).c_str(),
+               r_clients[thread_idx]->redis_set(
+                  "HSET %s %s %b",
+                  setabi.account.to_string().c_str(),
                   std::to_string(atrace.receipt.abi_sequence.value).c_str(),
                   reinterpret_cast<const char*>(setabi.abi.data()), setabi.abi.size());
             }
@@ -169,32 +170,31 @@ void abi_cache_plugin_impl::_process_applied_transaction( chain::transaction_tra
    sequence_heights[thread_idx] = global_sequence;
 }
 
-optional<abi_serializer> abi_cache_plugin_impl::get_abi_serializer( const account_name &name, fc::unsigned_int& abi_sequence ) {
+optional<abi_serializer> abi_cache_plugin_impl::get_abi_serializer( const account_name &name, const fc::unsigned_int& abi_sequence ) {
    try {
       auto res = abi_cache.find( name, abi_sequence );
 
       if ( res.valid() ) {
          return res;
       }
-      
+
       if (redis_enabled) {
-         chain::bytes abi;
-         bool not_nil = false;
 
          size_t idx = name.value % r_clients.size();
-         not_nil = r_clients[idx]->redis_cmd(
-            abi, "HGET %s %s",
-            std::to_string(name.value).c_str(),
+
+         auto ret = r_clients[idx]->redis_get(
+            "HGET %s %s",
+            name.to_string().c_str(),
             std::to_string(abi_sequence.value).c_str());
 
-         if (not_nil) {
+         if (ret.valid()) {
             abi_serializer abis;
-            abi_cache.abi_to_serializer(abis, name, abi);
+            abi_cache.abi_to_serializer(abis, name, *ret);
             abi_cache.insert(name, abi_sequence, abis);
             return abis;
          }
       }
-   } FC_CAPTURE_AND_LOG((name))
+   } FC_CAPTURE_AND_LOG((name)(abi_sequence))
 
    return optional<abi_serializer>();
 
@@ -280,7 +280,7 @@ void abi_cache_plugin::plugin_initialize(const variables_map& options) {
    FC_LOG_AND_RETHROW()
 }
 
-optional<abi_serializer> abi_cache_plugin::get_abi_serializer( const account_name &name, fc::unsigned_int& abi_sequence ) {
+optional<abi_serializer> abi_cache_plugin::get_abi_serializer( const account_name &name, const fc::unsigned_int& abi_sequence ) {
    return my->get_abi_serializer( name, abi_sequence );
 }
 

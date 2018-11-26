@@ -18,7 +18,7 @@ public:
    void plugin_startup();
    void plugin_shutdown();
 
-   optional<abi_serializer> get_abi_serializer( const account_name &name, fc::unsigned_int& abi_sequence );
+   optional<abi_serializer> get_abi_serializer( const account_name &name, const fc::unsigned_int& abi_sequence );
    uint64_t global_sequence_height();
 
 private:
