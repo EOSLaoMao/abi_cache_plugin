@@ -91,7 +91,7 @@ void abi_serializer_cache::insert( const account_name &name, const fc::unsigned_
 optional<abi_serializer> abi_serializer_cache::find( const account_name &name, const fc::unsigned_int& abi_sequence ) {
    if( name.good()) {
       try {
-         boost::upgrade_lock< boost::shared_mutex > lock(cache_mtx);
+         boost::shared_lock<boost::shared_mutex> lock(cache_mtx);
          auto itr = abi_cache_map.find( std::make_pair(name.value, abi_sequence.value) );
          if( itr != abi_cache_map.end() ) {
             return itr->second;

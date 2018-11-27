@@ -71,7 +71,7 @@ public:
                EOS_THROW(chain::redis_exception, "redis context error");
             }
 
-            void* re = redisCommand( ctx, format, args ... );
+            re = redisCommand( ctx, format, args ... );
 
             if (re == NULL || ctx->err) {
                elog("redis context error: ${e}", ("e", ctx->errstr));
@@ -108,7 +108,7 @@ public:
             EOS_THROW(chain::redis_exception, "redis context error");
          }
 
-         void* re = redisCommand( ctx, format, args ... );
+         re = redisCommand( ctx, format, args ... );
 
          if (re == NULL || ctx->err) {
             elog("redis context error: ${e}", ("e", ctx->errstr));
@@ -118,6 +118,7 @@ public:
       }
 
       auto reply = static_cast<redisReply*>(re);
+
       if ( reply->type == REDIS_REPLY_ERROR ) {
          elog("redis reply error: ${e}", ("e", reply->str));
          freeReplyObject(reply);

@@ -174,9 +174,8 @@ optional<abi_serializer> abi_cache_plugin_impl::get_abi_serializer( const accoun
    try {
       auto res = abi_cache.find( name, abi_sequence );
 
-      if ( res.valid() ) {
+      if (res.valid())
          return res;
-      }
 
       if (redis_enabled) {
 
