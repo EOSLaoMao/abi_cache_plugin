@@ -220,7 +220,7 @@ void abi_cache_plugin::set_program_options(options_description&, options_descrip
    cfg.add_options()
       ("abi-cache-thread-pool-size", bpo::value<size_t>()->default_value(4),
       "The size of the data processing thread pool.")
-      ("abi-cache-redis-ip", bpo::value<std::string>(),
+      ("abi-cache-redis-host", bpo::value<std::string>(),
       "Redis IP connection string If not specified then Redis cache is disabled.")
       ("abi-cache-redis-port", bpo::value<int>()->default_value(6379),
       "Redis port.");
@@ -252,14 +252,15 @@ void abi_cache_plugin::plugin_initialize(const variables_map& options) {
          my->sequence_heights.emplace_back(0);
       }
 
-      if( options.count( "abi-cache-redis-ip" )) {
+      if( options.count( "abi-cache-redis-host" )) {
          my->redis_enabled = true;
-         std::string redis_ip = options.at( "abi-cache-redis-ip" ).as<std::string>();
+         std::string redis_host = options.at( "abi-cache-redis-host" ).as<std::string>();
          int redis_port = options.at( "abi-cache-redis-port" ).as<int>();
 
-         ilog("Redis connection, ${i}:${p}", ("i", redis_ip)("p", redis_port));
+         ilog("Redis connection, ${i}:${p}", ("i", redis_host)("p", redis_port));
          for (int i = 0; i < thr_pool_size; i++) {
-            my->r_clients.emplace_back( new redis_client(redis_ip.c_str(), redis_port) );
+            auto dump_path = app().data_dir() / ("redis-dump-" + std::to_string(i));
+            my->r_clients.emplace_back( new redis_client(redis_host.c_str(), redis_port, dump_path) );
          }
 
       } else {
