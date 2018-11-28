@@ -6,44 +6,44 @@ Nodeos plugin for cache contract abi information. Support abi cache in Redis. Us
 
 ### Install redis client `hiredis`
 
-    ```bash
-    # e.g.
-    sudo apt install libhiredis-dev
-    ```
+```bash
+# e.g.
+sudo apt install libhiredis-dev
+```
 
 ### Embed `abi_cache_plugin` into `nodeos`
 
-    1. Get `elasticsearch_plugin` source code.
+1. Get `elasticsearch_plugin` source code.
 
-    ```bash
-    git clone https://github.com/EOSLaoMao/abi_cache_plugin.git plugins/abi_cache_plugin
-    cd plugins/abi_cache_plugin
-    git submodule update --init --recursive
-    ```
+```bash
+git clone https://github.com/EOSLaoMao/abi_cache_plugin.git plugins/abi_cache_plugin
+cd plugins/abi_cache_plugin
+git submodule update --init --recursive
+```
 
-    2. Add subdirectory to `plugins/CMakeLists.txt`.
+2. Add subdirectory to `plugins/CMakeLists.txt`.
 
-    ```cmake
-    ...
-    add_subdirectory(mongo_db_plugin)
-    add_subdirectory(login_plugin)
-    add_subdirectory(login_plugin)
-    add_subdirectory(abi_cache_plugin) # add this line.
-    ...
-    ```
+```cmake
+...
+add_subdirectory(mongo_db_plugin)
+add_subdirectory(login_plugin)
+add_subdirectory(login_plugin)
+add_subdirectory(abi_cache_plugin) # add this line.
+...
+```
 
-    3. Add following line to `programs/nodeos/CMakeLists.txt`.
+3. Add following line to `programs/nodeos/CMakeLists.txt`.
 
-    ```cmake
-    target_link_libraries( ${NODE_EXECUTABLE_NAME}
-            PRIVATE appbase
-            PRIVATE -Wl,${whole_archive_flag} login_plugin               -Wl,${no_whole_archive_flag}
-            PRIVATE -Wl,${whole_archive_flag} history_plugin             -Wl,${no_whole_archive_flag}
-            ...
-            # add this line.
-            PRIVATE -Wl,${whole_archive_flag} abi_cache_plugin           -Wl,${no_whole_archive_flag}
-            ...
-    ```
+```cmake
+target_link_libraries( ${NODE_EXECUTABLE_NAME}
+        PRIVATE appbase
+        PRIVATE -Wl,${whole_archive_flag} login_plugin               -Wl,${no_whole_archive_flag}
+        PRIVATE -Wl,${whole_archive_flag} history_plugin             -Wl,${no_whole_archive_flag}
+        ...
+        # add this line.
+        PRIVATE -Wl,${whole_archive_flag} abi_cache_plugin           -Wl,${no_whole_archive_flag}
+        ...
+```
 
 ### Usage
 
