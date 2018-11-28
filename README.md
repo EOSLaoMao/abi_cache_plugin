@@ -1,6 +1,6 @@
 # abi_cache_plugin
 
-Nodeos plugin for cache contract abi information. Support abi cache in Redis. Use `account` and `abi_sequence` as compound key.
+Nodeos plugin for cache contract abi information.
 
 ## Install
 
@@ -13,7 +13,7 @@ sudo apt install libhiredis-dev
 
 ### Embed `abi_cache_plugin` into `nodeos`
 
-1. Get `elasticsearch_plugin` source code.
+1. Get `abi_cache_plugin` source code.
 
 ```bash
 git clone https://github.com/EOSLaoMao/abi_cache_plugin.git plugins/abi_cache_plugin
