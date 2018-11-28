@@ -220,7 +220,7 @@ void abi_cache_plugin::set_program_options(options_description&, options_descrip
       ("abi-cache-thread-pool-size", bpo::value<size_t>()->default_value(4),
       "The size of the data processing thread pool.")
       ("abi-cache-redis-host", bpo::value<std::string>(),
-      "Redis IP connection string If not specified then Redis cache is disabled.")
+      "Redis host, If not specified then Redis cache is disabled.")
       ("abi-cache-redis-port", bpo::value<int>()->default_value(6379),
       "Redis port.");
 }
