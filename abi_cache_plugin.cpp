@@ -116,6 +116,7 @@ void abi_cache_plugin_impl::process_applied_transaction( chain::transaction_trac
 
    if (redis_enabled) {
       // update global sequence height in redis
+      check_task_queue_size();
       thread_pool->enqueue(
          [ smallest, this ](size_t thread_idx)
          {
@@ -219,6 +220,8 @@ void abi_cache_plugin::set_program_options(options_description&, options_descrip
    cfg.add_options()
       ("abi-cache-thread-pool-size", bpo::value<size_t>()->default_value(4),
       "The size of the data processing thread pool.")
+      ("abi-cache-max-queue-size", bpo::value<size_t>()->default_value(65536),
+       "The max size of the thread pool task queue.")
       ("abi-cache-redis-host", bpo::value<std::string>(),
       "Redis host, If not specified then Redis cache is disabled.")
       ("abi-cache-redis-port", bpo::value<int>()->default_value(6379),
@@ -229,9 +232,6 @@ void abi_cache_plugin::plugin_initialize(const variables_map& options) {
    try {
       ilog( "initializing abi_cache_plugin" );
 
-      if( options.count( "abi-cache-task-queue-size" )) {
-         my->max_task_queue_size = options.at( "abi-cache-task-queue-size" ).as<uint32_t>();
-      }
 
       // hook up to signals on controller
       chain_plugin* chain_plug = app().find_plugin<chain_plugin>();
@@ -246,6 +246,7 @@ void abi_cache_plugin::plugin_initialize(const variables_map& options) {
       }
 
       size_t thr_pool_size = options.at( "abi-cache-thread-pool-size" ).as<size_t>();
+      my->max_task_queue_size = options.at( "abi-cache-max-queue-size" ).as<size_t>();
 
       for (int i = 0; i < thr_pool_size; i++) {
          my->sequence_heights.emplace_back(0);
@@ -268,8 +269,6 @@ void abi_cache_plugin::plugin_initialize(const variables_map& options) {
 
       ilog("init thread pool, size: ${tps}", ("tps", thr_pool_size));
       my->thread_pool.reset( new ThreadPoolA(thr_pool_size) );
-
-      my->max_task_queue_size = thr_pool_size * 8192;
 
       my->applied_transaction_connection.emplace(
          chain.applied_transaction.connect( [&]( const chain::transaction_trace_ptr& t ) {
